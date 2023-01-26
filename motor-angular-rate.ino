@@ -29,11 +29,14 @@ const byte SIGNAL_B_R = 3;
 // Encoder ticks per (motor) revolution (TPR)
 const int TPR = 3000;
 
+//Wheel track length
+const double ELL = 0.2775;
 // Wheel radius [m]
 const double RHO = 0.0625;
 
 // Counter to keep track of encoder ticks [integer]
-volatile long encoder_ticks = 0;
+volatile long encoder_ticks_L = 0;
+volatile long encoder_ticks_R = 0;
 
 // Variable to store estimated angular rate of left wheel [rad/s]
 double omega_L = 0.0;
@@ -45,8 +48,7 @@ const int T = 1000;
 // Counters for milliseconds during interval
 long t_now = 0;
 long t_last = 0;
-short speed = 0;
-short turn = 0;
+
 
 
 // This function is called when SIGNAL_A goes HIGH
@@ -105,8 +107,11 @@ void loop()
         omega_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR) * 1000.0 / (double)(t_now - t_last);
 
         // Print some stuff to the serial monitor
-        Serial.print("Encoder ticks: ");
-        Serial.print(encoder_ticks);
+        Serial.print("Encoder ticks Left: ");
+        Serial.print(encoder_ticks_L);
+        Serial.print("\t");
+        Serial.print("Encoder ticks Right: ");
+        Serial.print(encoder_ticks_R);
         Serial.print("\t");
         Serial.print("Estimated left wheel speed: ");
         Serial.print(omega_L);
@@ -116,18 +121,14 @@ void loop()
         Serial.print(" m/s");
         Serial.print("\n");
         // Record the current time [ms]
-        speed = 0.5*(omega_L*RHO+omega_R*RHO);
-        turn = 0.5*(omega_L*RHO-omega_R*RHO);
-        Serial.print(speed);
-        Serial.print(" m/s");
-        Serial.print("\n");
-        Serial.print(turn);
-        Serial.print(" m/s");
-        Serial.print("\n");
+        double speed =computevehiclespeed( omega_L*RHO,  omega_R*RHO);
+        double turn_rate = computevehiclerate( omega_L*RHO,  omega_R*RHO);
         t_last = t_now;
 
         // Reset the encoder ticks counter
-        encoder_ticks = 0;
+        encoder_ticks_L = 0;
+        encoder_ticks_R = 0;
+
     }
 
     // Set the wheel motor PWM command [0-255]
@@ -139,4 +140,17 @@ void loop()
 
     // PWM command to the motor driver
     analogWrite(EA, u);
+}
+// Compute vehicle speed [m/s]
+double computevehiclespeed(double v_L, double v_R){
+    double v;
+    v = 0.5 * (v_L+ v_R);
+    return v;
+}
+// Compute vehicle turning rate [rad/s]
+double computevehiclerate(double v_L, double v_R)
+{
+    double omega;
+    omega = 1.0 / ELL * (v_R - v_L);
+    return omega;
 }
