@@ -57,12 +57,22 @@ void decodeEncoderTicks()
     if (digitalRead(SIGNAL_B_L) == LOW)
     {
         // SIGNAL_A leads SIGNAL_B, so count one way
-        encoder_ticks--;
+        encoder_ticks_L--;
     }
     else
     {
         // SIGNAL_B leads SIGNAL_A, so count the other way
-        encoder_ticks++;
+        encoder_ticks_L++;
+    }
+    if (digitalRead(SIGNAL_B_R) == LOW)
+    {
+        // SIGNAL_A leads SIGNAL_B, so count one way
+        encoder_ticks_R--;
+    }
+    else
+    {
+        // SIGNAL_B leads SIGNAL_A, so count the other way
+        encoder_ticks_R++;
     }
 }
 
@@ -88,7 +98,9 @@ void setup()
     pinMode(SIGNAL_A_R, INPUT);
     pinMode(SIGNAL_B_R, INPUT);
     // Every time the pin goes high, this is a pulse
-    attachInterrupt(digitalPinToInterrupt(SIGNAL_A), decodeEncoderTicks, RISING);
+    attachInterrupt(digitalPinToInterrupt(SIGNAL_A_L), decodeEncoderTicks, RISING);
+    attachInterrupt(digitalPinToInterrupt(SIGNAL_A_R), decodeEncoderTicks, RISING);
+
 
     // Print a message
     Serial.print("Program initialized.");
@@ -121,7 +133,7 @@ void loop()
         Serial.print(" m/s");
         Serial.print("\n");
         // Record the current time [ms]
-        double speed =computevehiclespeed( omega_L*RHO,  omega_R*RHO);
+        double spEed =computevehiclespeed( omega_L*RHO,  omega_R*RHO);
         double turn_rate = computevehiclerate( omega_L*RHO,  omega_R*RHO);
         t_last = t_now;
 

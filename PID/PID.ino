@@ -20,7 +20,6 @@ int I3 = 8;
 int I4 = 7;
 
 
-const PI = 3.1415;
 // Left wheel encoder digital pins
 const byte SIGNAL_A_L = 5;
 const byte SIGNAL_B_L = 6;
@@ -59,12 +58,24 @@ void decodeEncoderTicks()
     if (digitalRead(SIGNAL_B_L) == LOW)
     {
         // SIGNAL_A leads SIGNAL_B, so count one way
-        encoder_ticks--;
+        encoder_ticks_L--;
+        
     }
     else
     {
         // SIGNAL_B leads SIGNAL_A, so count the other way
-        encoder_ticks++;
+        encoder_ticks_L++;
+    }
+    if (digitalRead(SIGNAL_B_R) == LOW)
+    {
+        // SIGNAL_A leads SIGNAL_B, so count one way
+        encoder_ticks_R--;
+        
+    }
+    else
+    {
+        // SIGNAL_B leads SIGNAL_A, so count the other way
+        encoder_ticks_R++;
     }
 }
 void PID(double set, double current){
@@ -73,9 +84,9 @@ void PID(double set, double current){
     while( error > 0.01){
 
         double dt =0.01;
-        int kp =0.01;
-        int ki =0.01;
-        int kd =0.01;
+        double kp =4;
+        double ki =0.01;
+        double kd =0.01;
         double add = add+ error;
         double new_error = error*kp+ error*dt*kd+ add*ki;
         if(new_error>255){
@@ -84,13 +95,15 @@ void PID(double set, double current){
         else if(new_error<-255){
             new_error = -255;
         }
+        Serial.print(new_error);
+        Serial.print('\n');
         drive(new_error);
         theta_L = 2.0 * PI * ((double)encoder_ticks_L / (double)TPR) * 1000.0;
         theta_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR) * 1000.0;
         error = error- 0.5*(theta_L*RHO+theta_R*RHO);
         encoder_ticks_L = 0;
         encoder_ticks_R = 0;
-
+        
     }
 
 }
@@ -138,7 +151,8 @@ void setup()
     pinMode(SIGNAL_A_R, INPUT);
     pinMode(SIGNAL_B_R, INPUT);
     // Every time the pin goes high, this is a pulse
-    attachInterrupt(digitalPinToInterrupt(SIGNAL_A), decodeEncoderTicks, RISING);
+    attachInterrupt(digitalPinToInterrupt(SIGNAL_A_L), decodeEncoderTicks, RISING);
+    attachInterrupt(digitalPinToInterrupt(SIGNAL_A_R), decodeEncoderTicks, RISING);
 
     // Print a message
     Serial.print("Program initialized.");
@@ -147,7 +161,7 @@ void setup()
 
 void loop()
 {
-    pid(1,0);
+    PID(1,0);
 
     delay(10000);
 
