@@ -5,8 +5,6 @@
  * @version 1
  * @date 2023-01-25
  *
- * 
- *
  */
 
 // Wheel PWM pin (must be a PWM pin)
