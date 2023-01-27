@@ -71,11 +71,11 @@ void loop()
         IMU.readAcceleration(a_x, a_y, a_z);
 
         /// Print the accelerometer measurements to the Serial Monitor
-        Serial.print(a_x);
+        Serial.print(a_x*9.81);
         Serial.print("\t");
-        Serial.print(a_y);
+        Serial.print(a_y*9.81);
         Serial.print("\t");
-        Serial.print(a_z);
+        Serial.print(a_z*9.81);
         Serial.print(" g\t\t");
     }
 
