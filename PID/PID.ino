@@ -1,4 +1,5 @@
-/**
+/*
+ *
  * @file PID.ino
  * @author MATTHEW MURRAY (20mdre@queensu.ca)
  * @brief PID time
@@ -8,7 +9,6 @@
  */
 
 
-//!NEED TO BE TESTED
 // Wheel PWM pin (must be a PWM pin)
 int EA = 11;
 int EB = 9;
@@ -32,7 +32,7 @@ const int TPR = 3000;
 //Wheel track length
 const double ELL = 0.2775;
 // Wheel radius [m]
-const double RHO =0.0625;
+const double RHO = 0.0625;
 
 // Counter to keep track of encoder ticks [integer]
 volatile long encoder_ticks_L = 0;
@@ -80,26 +80,24 @@ void decodeEncoderTicks()
 }
 void PID(double set, double current){
     double error = set-current;
-
+    double dt =0.01;
+    double kp =0.5;
+    double ki =0.01;
+    double kd =0.01;
+    double add = 0;
+    double last_error = error;
     while( error > 0.01){
-
-        double dt =0.01;
-        double kp =4;
-        double ki =0.01;
-        double kd =0.01;
-        double add = add+ error;
-        double new_error = error*kp+ error*dt*kd+ add*ki;
-        if(new_error>255){
-            new_error = 255;
-        }
-        else if(new_error<-255){
-            new_error = -255;
-        }
-        Serial.print(new_error);
+        
+        
+        add = add+ error;
+        double u = error*kp+ (error-last_error)*dt*kd+ add*ki;
+        
+        Serial.print(u);
         Serial.print('\n');
-        drive(new_error);
+        drive(u);
         theta_L = 2.0 * PI * ((double)encoder_ticks_L / (double)TPR) * 1000.0;
         theta_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR) * 1000.0;
+        last_error=error;
         error = error- 0.5*(theta_L*RHO+theta_R*RHO);
         encoder_ticks_L = 0;
         encoder_ticks_R = 0;
@@ -108,6 +106,9 @@ void PID(double set, double current){
 
 }
 void drive(double pwm){
+    if(pwm>255){
+      pwm=255;
+    }
 
     if(pwm>0){
         digitalWrite(I1, LOW);
