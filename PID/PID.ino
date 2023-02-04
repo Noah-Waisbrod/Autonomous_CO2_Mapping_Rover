@@ -7,12 +7,7 @@
    @date 2023-01-25
 
 */
-#include <FastLED.h>
-#define LED_PIN 4
-#define CHIPSET WS2812
-#define COLOR_ORDER GRB
-#define NUM_LEDS 8
-CRGB leds[NUM_LEDS];
+
 
 
 // Wheel PWM pin (must be a PWM pin)
@@ -46,8 +41,8 @@ volatile long encoder_ticks_R = 0;
 
 
 // Variable to store estimated angular rate of left wheel [rad/s]
-double theta_L = 0.0;
-double theta_R = 0.0;
+double omega_L = 0.0;
+double omega_R = 0.0;
 
 // Sampling interval for measurements in milliseconds
 const int T = 1000;
@@ -84,23 +79,17 @@ void decodeEncoderTicks()
     encoder_ticks_R++;
   }
 }
-void PID(double setV, double currentV, double setW, double currentW) {
-  for(int i=0; i<=8;i++){
-    leds[i].setRGB(i*255/8,0,0);
-    
-  }
-  double errorW = setW - currentW;
+void PID(double setV, double currentV) {
+  
   double errorV = setV - currentV;
   double dt = 0.01;
-  double kpW = 0;
-  double kiW = 0.0;
-  double kdW = 0.0;
-  double kpV = 12;
+
+  double kpV = 400;
   double kiV = 0.0;
   double kdV = 0.0;
-  double addW = 0;
+
   double addV = 0;
-  double last_errorW = errorW;
+ 
   double last_errorV = errorV;
   double pwmR = 0;
   double pwmL = 0;
@@ -108,11 +97,14 @@ void PID(double setV, double currentV, double setW, double currentW) {
   //    Serial.print(errorW);
   //    Serial.print("\n errorV \t ");
   //    Serial.print(erorV);
-  while ( errorW > 0 || errorV > 0) {
+  double t_last =0;
+  double t_now =0;
+  while (errorV > 0.0001||errorV < -0.0001) {
+    t_now = millis();
 
+    
       
     addV += errorV * dt;
-    addW += errorW * dt;
     Serial.print("errorV:");
     Serial.print(errorV);
     Serial.print(",");
@@ -121,10 +113,9 @@ void PID(double setV, double currentV, double setW, double currentW) {
     Serial.print(",");
     Serial.print("DTv:");
     Serial.println((errorV - last_errorV) * dt);
-    double uW = errorW * kpW + (errorW - last_errorW) * dt * kdW + addW * kiW;
     double uV = errorV * kpV + (errorV - last_errorV) * dt * kdV + addV * kiV;
-    pwmL = (uV>0)? 255:-255 ;
-    pwmR = (uV>0)? 255:-255 ;
+    pwmL = uV;
+    pwmR = uV;
 //    Serial.print(",");
 //    Serial.print("pwmR:");
 //    Serial.print(pwmR);
@@ -132,19 +123,16 @@ void PID(double setV, double currentV, double setW, double currentW) {
 //    Serial.print("pwmL:");
 //    Serial.println(pwmL);
     drive(pwmL, pwmR);
-    theta_L = 2.0 * PI * ((double)encoder_ticks_L / (double)TPR) * 1000.0;
-    theta_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR) * 1000.0;
+    omega_L = 2.0 * PI * ((double)encoder_ticks_L / (double)TPR)/(t_now-t_last) * 1000.0;
+    omega_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR)/(t_now-t_last) * 1000.0;
     
-    last_errorW = errorW;
     last_errorV = errorV;
-    if((theta_L * RHO + theta_R * RHO)< 10000){
-      errorV = errorV - 0.5 * (theta_L * RHO + theta_R * RHO);
-    }
+    errorV = errorV - 0.5 * (omega_L * RHO + omega_R * RHO);
     
-    errorW = errorW - 0.5 * (theta_L * RHO - theta_R * RHO);
-
+    
     encoder_ticks_L = 0;
     encoder_ticks_R = 0;
+    t_last = t_now;
 
   }
 
@@ -218,20 +206,14 @@ void setup()
   // Every time the pin goes high, this is a pulse
   attachInterrupt(digitalPinToInterrupt(SIGNAL_A_L), decodeEncoderTicks, RISING);
   attachInterrupt(digitalPinToInterrupt(SIGNAL_A_R), decodeEncoderTicks, RISING);
-  
-  FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
-  
-  FastLED.setBrightness( 200 );
-
-  FastLED.setMaxPowerInMilliWatts(5000);
-  
-  pinMode(LED_PIN,OUTPUT); 
 
 }
 
 void loop()
 {
-  PID(100, 0, 0, 0);
+  PID(0.5, 0);
+  delay(10000);
+  PID(0, 0.5);
 
 
 
