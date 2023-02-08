@@ -83,21 +83,21 @@ void decodeEncoderTicks()
 /* pass through set speed, current speed, set turn rate current turn rate */
 void PID(double setV, double currentV,double setW, double currentW)
 {
-  double errorL = setV + setW - (currentV+currentW) ; //find speed error
-  double errorR = setV - setW - (currentV-currentW) ; //find turn rate error
+  double errorL = setV + setW - (currentV+currentW) ; //find left wheel speed error
+  double errorR = setV - setW - (currentV-currentW) ; //find right wheel speed error
   double dt = 0.01;// set some time delta for dt term
 
-  double kpL = 200;// set kp for speed
-  double kiL = 0.0;// set ki for speed
-  double kdL = 0.0;// set kd for speed
-  double kpR = 200;// set kp for Turn rate
-  double kiR = 0.0;// set ki for Turn rate
-  double kdR = 0.0;// set kd for Turn rate
+  double kpL = 200;// set kp for left wheel
+  double kiL = 0.0;// set ki for left wheel
+  double kdL = 0.0;// set kd for left wheel
+  double kpR = 200;// set kp for right wheel
+  double kiR = 0.0;// set ki for right wheel
+  double kdR = 0.0;// set kd for right wheel
 
-  double addL = 0;//set integrating term for speed
-  double addR = 0;//set integrating term for Turn rate
+  double addL = 0;//set integrating term left wheel
+  double addR = 0;//set integrating term right wheel
 
-  double last_errorL = errorL;
+  double last_errorL = errorL; 
   double last_errorR= errorR;
 
   double pwmR = 0;
@@ -123,8 +123,8 @@ void PID(double setV, double currentV,double setW, double currentW)
     // Serial.print(",");
     // Serial.print("DTL:");
     // Serial.println((errorL - last_errorL) * dt);
-    uL = errorL * kpL + (errorL - last_errorL) * dt * kdL + addL * kiL; //pid calc for speed
-    uR = errorR * kpR + (errorR - last_errorR) * dt * kiR + addR * kiR; //pid calc for turn rate
+    uL = errorL * kpL + (errorL - last_errorL) * dt * kdL + addL * kiL; //pid calc for left wheel
+    uR = errorR * kpR + (errorR - last_errorR) * dt * kiR + addR * kiR; //pid calc for right wheel
 
     pwmL = uL;
     pwmR = uR;
