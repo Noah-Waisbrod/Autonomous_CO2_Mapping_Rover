@@ -232,14 +232,14 @@ void setup()
 
 void loop()
 {
-  delay(3000); //sanity check
+  delay(3000); //sanity check (pause incase you messed up the code)
   PID(0.5, 0,0,0);
-  delay(6000);
+  delay(6000);//Co for 6 seconds
   omega_L = 2.0 * PI * ((double)encoder_ticks_L / (double)TPR)/(t_now-t_last) * 1000.0;
   omega_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR)/(t_now-t_last) * 1000.0;
   double speed = 0.5*(omega_R+omega_L);
   PID(0, speed,0,0);
-  delay(100000)
+  delay(100000);// Go for ten seconds;
 
 
 
