@@ -3,8 +3,8 @@
    @file PID.ino
    @author MATTHEW MURRAY (20mdre@queensu.ca)
    @brief PID time
-   @version 1
-   @date 2023-01-25
+   @version 3
+   @date 2023-02-07
 
 */
 
@@ -193,8 +193,8 @@ void drive(double pwmL, double pwmR) {
     pwmL = -pwmL;
 
   }
-  pwmL = constrain(pwmL,80,255);
-  pwmR = constrain(pwmR,80,255);
+  pwmL = constrain(pwmL,80,255);//constrains the signal from 80 to 255
+  pwmR = constrain(pwmR,80,255);//constrains the signal from 80 to 255
 
   // PWM command to the motor driver
   analogWrite(EA, pwmL);
