@@ -53,6 +53,7 @@ long t_last = 0;
 
 
 
+
 // This function is called when SIGNAL_A goes HIGH
 void decodeEncoderTicks()
 {
@@ -107,6 +108,12 @@ void PID(double setV, double currentV,double setW, double currentW)
   double t_now =0;
   double uL = 0;
   float uR = 0;
+
+  double error=100;//last = error for moving avg
+  double lerror=100;//last = error for moving avg
+  double llerror=100;//last last error for moving avg
+
+
   while (true) {
     t_now = millis();
     dt =t_now-t_last;
@@ -138,6 +145,11 @@ void PID(double setV, double currentV,double setW, double currentW)
     omega_L = 2.0 * PI * ((double)encoder_ticks_L / (double)TPR)/(t_now-t_last) * 1000.0;
     omega_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR)/(t_now-t_last) * 1000.0;
     
+    //these lines are for moving avg
+    llerror=lerror;
+    lerror =error;
+    error = 0.5*(errorL+errorR);
+
     last_errorL = errorL;
     last_errorR = errorR;
 
@@ -149,8 +161,8 @@ void PID(double setV, double currentV,double setW, double currentW)
     encoder_ticks_L = 0;
     encoder_ticks_R = 0;
     t_last = t_now;
-    if(t_now>10000){ //after ten seconds leave pid loop
-      break;
+    if((error+lerror+llerror)/3>0.01){
+      break
     }
   }
 
@@ -158,20 +170,9 @@ void PID(double setV, double currentV,double setW, double currentW)
 void drive(double pwmL, double pwmR) {
 
 
-  if (pwmL > 255) {
-    pwmL = 255;
-  }
-  if (pwmR > 255) {
-    pwmR = 255;
-  }
-  if (pwmL < -255) {
-    pwmL = -255;
-  }
-  if (pwmR < -255) {
-    pwmR = -255;
-  }
   
-  if (pwmR > 0) {
+  
+  if (pwmR > 0) {//signal flips and H-bridge set
     digitalWrite(I1, LOW);
     digitalWrite(I2, HIGH);
 
@@ -192,6 +193,8 @@ void drive(double pwmL, double pwmR) {
     pwmL = -pwmL;
 
   }
+  pwmL = constrain(pwmL,80,255);
+  pwmR = constrain(pwmR,80,255);
 
   // PWM command to the motor driver
   analogWrite(EA, pwmL);
@@ -229,9 +232,14 @@ void setup()
 
 void loop()
 {
-  PID(0.5, 0);
-  delay(600000);
-  PID(0, 0.5);
+  delay(3000); //sanity check
+  PID(0.5, 0,0,0);
+  delay(6000);
+  omega_L = 2.0 * PI * ((double)encoder_ticks_L / (double)TPR)/(t_now-t_last) * 1000.0;
+  omega_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR)/(t_now-t_last) * 1000.0;
+  double speed = 0.5*(omega_R+omega_L);
+  PID(0, speed,0,0);
+  delay(100000)
 
 
 
