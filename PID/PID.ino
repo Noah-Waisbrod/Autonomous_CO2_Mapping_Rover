@@ -79,43 +79,55 @@ void decodeEncoderTicks()
     encoder_ticks_R++;
   }
 }
-void PID(double setV, double currentV) {
-  
-  double errorV = setV - currentV;
-  double dt = 0.01;
 
-  double kpV = 400;
-  double kiV = 0.0;
-  double kdV = 0.0;
+/* pass through set speed, current speed, set turn rate current turn rate */
+void PID(double setV, double currentV,double setW, double currentW)
+{
+  double errorL = setV + setW - (currentV+currentW) ; //find speed error
+  double errorR = setV - setW - (currentV-currentW) ; //find turn rate error
+  double dt = 0.01;// set some time delta for dt term
 
-  double addV = 0;
- 
-  double last_errorV = errorV;
+  double kpL = 200;// set kp for speed
+  double kiL = 0.0;// set ki for speed
+  double kdL = 0.0;// set kd for speed
+  double kpR = 200;// set kp for Turn rate
+  double kiR = 0.0;// set ki for Turn rate
+  double kdR = 0.0;// set kd for Turn rate
+
+  double addL = 0;//set integrating term for speed
+  double addR = 0;//set integrating term for Turn rate
+
+  double last_errorL = errorL;
+  double last_errorR= errorR;
+
   double pwmR = 0;
   double pwmL = 0;
-  //    Serial.print("errorW\t");
-  //    Serial.print(errorW);
-  //    Serial.print("\n errorV \t ");
-  //    Serial.print(erorV);
+  
   double t_last =0;
   double t_now =0;
-  while (errorV > 0.0001||errorV < -0.0001) {
+  double uL = 0;
+  float uR = 0;
+  while (true) {
     t_now = millis();
-
+    dt =t_now-t_last;
     
       
-    addV += errorV * dt;
-    Serial.print("errorV:");
-    Serial.print(errorV);
-    Serial.print(",");
-    Serial.print("addV:");
-    Serial.print(addV);
-    Serial.print(",");
-    Serial.print("DTv:");
-    Serial.println((errorV - last_errorV) * dt);
-    double uV = errorV * kpV + (errorV - last_errorV) * dt * kdV + addV * kiV;
-    pwmL = uV;
-    pwmR = uV;
+    addL += errorL * dt;
+    addR += errorR * dt;
+
+    // Serial.print("errorL:");
+    // Serial.print(errorL);
+    // Serial.print(",");
+    // Serial.print("addL:");
+    // Serial.print(addL);
+    // Serial.print(",");
+    // Serial.print("DTL:");
+    // Serial.println((errorL - last_errorL) * dt);
+    uL = errorL * kpL + (errorL - last_errorL) * dt * kdL + addL * kiL; //pid calc for speed
+    uR = errorR * kpR + (errorR - last_errorR) * dt * kiR + addR * kiR; //pid calc for turn rate
+
+    pwmL = uL;
+    pwmR = uR;
 //    Serial.print(",");
 //    Serial.print("pwmR:");
 //    Serial.print(pwmR);
@@ -126,14 +138,20 @@ void PID(double setV, double currentV) {
     omega_L = 2.0 * PI * ((double)encoder_ticks_L / (double)TPR)/(t_now-t_last) * 1000.0;
     omega_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR)/(t_now-t_last) * 1000.0;
     
-    last_errorV = errorV;
-    errorV = errorV - 0.5 * (omega_L * RHO + omega_R * RHO);
+    last_errorL = errorL;
+    last_errorR = errorR;
+
+    errorL= errorL - omega_L * RHO ; //todo check if one of these should go backwards becasue of encoder
+    errorL= errorL - omega_R * RHO ;
+
     
     
     encoder_ticks_L = 0;
     encoder_ticks_R = 0;
     t_last = t_now;
-
+    if(t_now>10000){ //after ten seconds leave pid loop
+      break;
+    }
   }
 
 }
@@ -212,7 +230,7 @@ void setup()
 void loop()
 {
   PID(0.5, 0);
-  delay(10000);
+  delay(600000);
   PID(0, 0.5);
 
 
