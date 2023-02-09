@@ -88,10 +88,10 @@ void PID(double setV, double currentV,double setW, double currentW)
   double errorR = setV - setW - (currentV-currentW) ; //find right wheel speed error
   double dt = 0.01;// set some time delta for dt term
 
-  double kpL = 200;// set kp for left wheel
+  double kpL = 400;// set kp for left wheel
   double kiL = 0.0;// set ki for left wheel
   double kdL = 0.0;// set kd for left wheel
-  double kpR = 200;// set kp for right wheel
+  double kpR = 400;// set kp for right wheel
   double kiR = 0.0;// set ki for right wheel
   double kdR = 0.0;// set kd for right wheel
 
@@ -105,9 +105,9 @@ void PID(double setV, double currentV,double setW, double currentW)
   double pwmL = 0;
   
   double t_last =0;
-  double t_now =0;
+  double t_now = 0;
   double uL = 0;
-  float uR = 0;
+  double uR = 0;
 
   double error=100;//last = error for moving avg
   double lerror=100;//last = error for moving avg
@@ -117,52 +117,54 @@ void PID(double setV, double currentV,double setW, double currentW)
   while (true) {
     t_now = millis();
     dt =t_now-t_last;
-    
+    if(dt>100){
       
-    addL += errorL * dt;
-    addR += errorR * dt;
-
-    // Serial.print("errorL:");
-    // Serial.print(errorL);
-    // Serial.print(",");
-    // Serial.print("addL:");
-    // Serial.print(addL);
-    // Serial.print(",");
-    // Serial.print("DTL:");
-    // Serial.println((errorL - last_errorL) * dt);
-    uL = errorL * kpL + (errorL - last_errorL) * dt * kdL + addL * kiL; //pid calc for left wheel
-    uR = errorR * kpR + (errorR - last_errorR) * dt * kiR + addR * kiR; //pid calc for right wheel
-
-    pwmL = uL;
-    pwmR = uR;
-//    Serial.print(",");
-//    Serial.print("pwmR:");
-//    Serial.print(pwmR);
-//    Serial.print(",");
-//    Serial.print("pwmL:");
-//    Serial.println(pwmL);
-    drive(pwmL, pwmR);
-    omega_L = 2.0 * PI * ((double)encoder_ticks_L / (double)TPR)/(t_now-t_last) * 1000.0;
-    omega_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR)/(t_now-t_last) * 1000.0;
-    
-    //these lines are for moving avg
-    llerror=lerror;
-    lerror =error;
-    error = 0.5*(errorL+errorR);
-
-    last_errorL = errorL;
-    last_errorR = errorR;
-
-    errorL= errorL - omega_L * RHO ; //todo check if one of these should go backwards becasue of encoder
-    errorL= errorL - omega_R * RHO ;
-
-    
-    
-    encoder_ticks_L = 0;
-    encoder_ticks_R = 0;
-    t_last = t_now;
-    if((error+lerror+llerror)/3>0.01){
-      break
+      addL += errorL * dt;
+      addR += errorR * dt;
+  
+      // Serial.print("errorL:");
+      // Serial.print(errorL);
+      // Serial.print(",");
+      // Serial.print("addL:");
+      // Serial.print(addL);
+      // Serial.print(",");
+      // Serial.print("DTL:");
+      // Serial.println((errorL - last_errorL) * dt);
+      uL = errorL * kpL + (errorL - last_errorL) * dt * kdL + addL * kiL; //pid calc for left wheel
+      uR = errorR * kpR + (errorR - last_errorR) * dt * kiR + addR * kiR; //pid calc for right wheel
+  
+      pwmL = uL;
+      pwmR = uR;
+      Serial.print(",");
+      Serial.print("pwmR:");
+      Serial.print(pwmR);
+      Serial.print(",");
+      Serial.print("pwmL:");
+      Serial.println(pwmL);
+      drive(pwmL, pwmR);
+      omega_L = 2.0 * PI * ((double)encoder_ticks_L / (double)TPR)/(t_now-t_last) * 1000.0;
+      omega_R = 2.0 * PI * ((double)encoder_ticks_R / (double)TPR)/(t_now-t_last) * 1000.0;
+      
+      //these lines are for moving avg
+      llerror=lerror;
+      lerror =error;
+      error = 0.5*(errorL+errorR);
+  
+      last_errorL = errorL;
+      last_errorR = errorR;
+  
+      errorL= errorL + omega_L * RHO ; //todo check if one of these should go backwards becasue of encoder
+      errorR= errorR - omega_R * RHO ;
+  
+      
+      
+      encoder_ticks_L = 0;
+      encoder_ticks_R = 0;
+  //    delay(1);
+      t_last = t_now;
+      if((error+lerror+llerror)/3<0.01){
+        break;
+      }
     }
   }
 
