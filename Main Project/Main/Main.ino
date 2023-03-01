@@ -1,24 +1,85 @@
 
 //-------------------------------------
 //Names          : Noah Waisbrod, Mustafa Hasan, Matthew Murray
-//Student Numbers:
+//Student Numbers: 20274009
 //------------------------------------- 
 
-//Imports---------------------------
+//---------------------------------Imports----------------------------------
 #include <Adafruit_NeoPixel.h>
 
-//pin assignments-------------------
+//------------------------------pin assignments-----------------------------
 
-//SHARPS
+//-SHARPS-
 int sharpF = A5;
 int sharpL = A4;
 int sharpR = A3;
 
-//LED
+//-LED-
 int PIN = 6;
 int NUMPIXELS = 8;
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_RGBW + NEO_KHZ800);
 
+//-wheels-
+// Wheel PWM pin (must be a PWM pin)
+int EA = 6; // Right wheel
+int EB = 5; // Left wheel
+
+// Wheel direction digital pins
+int I1 = 8; // Forwards (R)
+int I2 = 7; // Backwards (R)
+
+int I3 = 13; // Backwards (L)
+int I4 = 12; // Forwards (L)
+
+int LF = 100;
+int LB = 200;
+int RF = 300;
+int RB = 400;
+
+// Motor PWM command variable [0-255]
+byte uL = 0;
+byte uR = 0;
+
+// Left wheel encoder digital pins
+const byte SIGNAL_A_L = 3;
+const byte SIGNAL_B_L = 2;
+
+const byte SIGNAL_A_R = 9;
+const byte SIGNAL_B_R = 10;
+
+// Encoder ticks per (motor) revolution (TPR)
+const int TPR = 3000;
+
+// Wheel radius [m]
+const double RHO = 0.0625;
+
+// Counter to keep track of encoder ticks [integer]
+volatile long encoder_ticks_L = 0;
+volatile long encoder_ticks_R = 0;
+
+// Variable to store estimated angular rate of left wheel [rad/s]
+double omega_L = 0.0;
+double omega_R = 0.0;
+
+// Sampling interval for measurements in milliseconds
+const int T = 70;
+
+// Counters for milliseconds during interval
+long t_now = 0;
+long t_last = 0;
+
+#define MAX_PWM 255
+#define MIN_PWM 0
+
+double kp = 250;
+double ki = 50;
+double kd = 0.0;
+double error_L, p_error_L, i_error_L, d_error_L, error_R, p_error_R, i_error_R, d_error_R;
+double pwm_L, pwm_R;
+double setpoint = 0.70; // m/s
+double actual_speed_L,actual_speed_R;
+
+//-----------------------------------Setup-------------------------------
 void setup() {
     
     //SHARP
@@ -28,21 +89,21 @@ void setup() {
 
     //LED
     pixels.begin();
+    pixels.setBrightness(50);
 
     Serial.begin(9600);     
     Serial.println(" "); 
     Serial.println("Program ready.");
 }
 
+//----------------------------------main--------------------------------
 void loop() {
-  // put your main code here, to run repeatedly:
-  pixels.setPixelColor(3,pixels.Color(255, 0, 0));
-  pixels.show();
+  setNeoPixelColor(3);  
   delay(1000);
   
 }
 
-//---------------Functions------------------
+//-------------------------------Functions------------------------------
 
 //PID Motor
 void PID(){
@@ -62,20 +123,21 @@ boolean SafteyDistance(double frontDist, double sideDist){
 }
 
 //Function to update the LED stick
-void setNeoPixelColor(int color) {
-  switch (color) {
-    case 1:
-      pixels.setPixelColor(0, pixels.Color(255, 0, 0)); // set first pixel to red
-      break;
-    case 2:
-      pixels.setPixelColor(0, pixels.Color(0, 255, 0)); // set first pixel to green
-      break;
-    case 3:
-      pixels.setPixelColor(0, pixels.Color(0, 0, 255)); // set first pixel to blue
-      break;
-    default:
-      // do nothing if the input is not between 1 and 3
-      break;
-  }
+// 0 = OFF
+// 1 = GREEN
+// 2 = RED
+// 3 = BLUE
+void setNeoPixelColor(int colour) {
+  for(int i = 0; i < 8; i++){
+    if(colour == 1){
+      pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+      } else if(colour == 2){
+        pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+        } else if(colour == 0){
+          pixels.setPixelColor(i, pixels.Color(0, 0, 0));
+          } else {
+            pixels.setPixelColor(i, pixels.Color(0, 0, 255));
+            }
+    }
   pixels.show(); // update the NeoPixel stick
 }
