@@ -86,6 +86,9 @@ double actual_speed_L,actual_speed_R;
 
 //-----------------------------------Setup-------------------------------
 void setup() {
+    //start
+    Serial.begin(9600);     
+    Serial.println(" ");
     
     //SHARP
     pinMode(sharpF, INPUT);
@@ -107,8 +110,6 @@ void setup() {
       delay(1000);
     }
     //Start 
-    Serial.begin(9600);     
-    Serial.println(" ");
     Serial.println("Program ready.");
 }
 
@@ -118,12 +119,10 @@ void loop() {
     Serial.println("Measurement failed");
     return;
   }
-  
   Serial.print("CO2: ");
   Serial.print(sgp.eCO2);
-  Serial.print(" ppm\tTVOC: ");
-  Serial.print(sgp.TVOC);
-  Serial.println(" ppb");
+  Serial.print(" ppm");
+  Serial.println("");
 
   delay(1000);
   
