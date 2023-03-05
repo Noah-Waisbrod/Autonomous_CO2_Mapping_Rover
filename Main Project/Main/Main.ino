@@ -6,7 +6,8 @@
 
 //---------------------------------Imports----------------------------------
 #include <Adafruit_NeoPixel.h>
-
+#include <Wire.h>
+#include <Adafruit_SGP30.h>
 //------------------------------pin assignments-----------------------------
 
 //-SHARPS-
@@ -18,6 +19,10 @@ int sharpR = A3;
 int PIN = 6;
 int NUMPIXELS = 8;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_RGBW + NEO_KHZ800);
+
+//-CO2-
+Adafruit_SGP30 sgp;
+
 
 //-wheels-
 // Wheel PWM pin (must be a PWM pin)
@@ -91,14 +96,35 @@ void setup() {
     pixels.begin();
     pixels.setBrightness(50);
 
+    //CO2 (sensor to warm up)
+    if (! sgp.begin()) {
+      Serial.println("SGP30 not found :(");
+      while (1);
+    }
+    Serial.println("Found SGP30");
+    for (int i = 0; i < 15; i++) {
+      Serial.print(".");
+      delay(1000);
+    }
+    //Start 
     Serial.begin(9600);     
-    Serial.println(" "); 
+    Serial.println(" ");
     Serial.println("Program ready.");
 }
 
 //----------------------------------main--------------------------------
 void loop() {
-  setNeoPixelColor(3);  
+  if (! sgp.IAQmeasure()) {
+    Serial.println("Measurement failed");
+    return;
+  }
+  
+  Serial.print("CO2: ");
+  Serial.print(sgp.eCO2);
+  Serial.print(" ppm\tTVOC: ");
+  Serial.print(sgp.TVOC);
+  Serial.println(" ppb");
+
   delay(1000);
   
 }
