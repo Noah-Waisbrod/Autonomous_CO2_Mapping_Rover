@@ -120,7 +120,7 @@ void loop() {
     return;
   }
   Serial.print("CO2: ");
-  Serial.print(sgp.eCO2);
+  Serial.print(getCO2());
   Serial.print(" ppm");
   Serial.println("");
 
@@ -129,6 +129,11 @@ void loop() {
 }
 
 //-------------------------------Functions------------------------------
+
+//Function to get the CO2 reading
+int getCO2(){
+  return sgp.eCO2;
+  }
 
 //PID Motor
 void PID(){
