@@ -6,10 +6,24 @@
 //------------------------------------- 
 
 //---------------------------------Imports----------------------------------
+#include <ros.h> //this must be first import
+#include <std_msgs/String.h>
 #include <Adafruit_NeoPixel.h>
 #include <Wire.h>
 #include <Adafruit_SGP30.h>
+
+
+
+//------------------------------ros node setups-----------------------------
+ros::NodeHandle nh;
+
+std_msgs::String str_msg;
+ros::Publisher chatter("chatter", &str_msg);
+ros::Publisher chatter("pos", &str_msg);
+
 //------------------------------pin assignments-----------------------------
+
+
 
 //----SHARPS----
 int sharpF = A5;
@@ -109,7 +123,11 @@ void setup() {
     //start
     Serial.begin(9600);     
     Serial.println(" ");
-    
+    //ros
+    nh.initNode();
+    nh.advertise(chatter);
+
+
     //SHARP
     pinMode(sharpF, INPUT);
     pinMode(sharpL, INPUT);
@@ -169,7 +187,8 @@ void setup() {
 void loop() {
   
   PIControler(1,0);
-  
+  chatter.publish(String(getCO2());
+  nh.spinOnce();
 }
 
 //-------------------------------Functions------------------------------
