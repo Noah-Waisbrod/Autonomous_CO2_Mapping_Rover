@@ -5,11 +5,13 @@ from std_msgs.msg import Float32
 # Callback function to read the map from the ROS topic
 def map_callback(data):
     # Process the map data here
+        
     pass
 
 # Callback function to read the CO2 data from the ROS topic
 def co2_callback(data):
     # Process the CO2 data here
+    
     pass
 
 # Main function to drive the robot to each point
