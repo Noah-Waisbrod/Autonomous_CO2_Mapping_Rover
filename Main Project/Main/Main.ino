@@ -368,8 +368,8 @@ void PIControler(double vd, double od){
     {
 
         // Set the desired vehicle speed and turning rate
-        v_d = 0.5;     // [m/s]
-        omega_d = 0.0; // [rad/s]
+        v_d = vd;     // [m/s]
+        omega_d = od; // [rad/s]
 
         // Estimate the rotational speed of each wheel [rad/s]
         omega_L = compute_wheel_rate(encoder_ticks_L, (double)(t_now - t_last));
