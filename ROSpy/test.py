@@ -1,53 +1,65 @@
 import rospy
 from geometry_msgs.msg import Point
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Int32
+from tkinter import *
 
-# Callback function to read the map from the ROS topic
-def map_callback(data):
-    # Process the map data here
-        
-    pass
+class CO2SensorNode:
+    def __init__(self):
+        self.co2_data = 0
+        self.sub = rospy.Subscriber('co2_topic', Float32, self.co2_callback)
 
-# Callback function to read the CO2 data from the ROS topic
-def co2_callback(data):
-    # Process the CO2 data here
-    
-    pass
+    def co2_callback(self, msg):
+        self.co2_data = msg.data
 
-# Main function to drive the robot to each point
-def main():
-    # Initialize ROS node
-    rospy.init_node('robot_driver', anonymous=True)
+class MapNode:
+    def __init__(self):
+        self.map_data = Point()
+        self.sub = rospy.Subscriber('map_topic', Point, self.map_callback)
 
-    # Subscribe to the map ROS topic
-    rospy.Subscriber('/map_topic', Point, map_callback)
+    def map_callback(self, msg):
+        self.map_data = msg
 
-    # Subscribe to the CO2 ROS topic
-    rospy.Subscriber('/co2_topic', Float32, co2_callback)
+def stop():
+    global root
+    drive_pub.publish(Point(x=0, y=0, z=0)) # publish x,x,x to stop robot movement
+    root.destroy()
 
-    # Publish to the drive-to ROS topic
-    drive_pub = rospy.Publisher('/drive_to_topic', Point, queue_size=10)
+rospy.init_node('robot_driver', anonymous=True)
+sensor_node = CO2SensorNode()
+map_node = MapNode()
 
-    # Define the list of points to drive to
-    points = [(1, 2), (3, 4), (5, 6)]
+root = Tk()
+label1 = Label(root, text='CO2 Sensor Reading:')
+label1.pack()
+co2_label = Label(root, text='0')
+co2_label.pack()
+label2 = Label(root, text='Map Data:')
+label2.pack()
+map_label = Label(root, text='(0, 0, 0)')
+map_label.pack()
+button = Button(root, text='Stop', command=stop)
+button.pack()
 
-    # Loop through each point and drive to it
-    for point in points:
-        # Create a Point message with the coordinates of the point
-        drive_to_point = Point()
-        drive_to_point.x = point[0]
-        drive_to_point.y = point[1]
+drive_pub = rospy.Publisher('/drive_to_topic', Point, queue_size=10)
 
-        # Publish the drive-to point to the ROS topic
-        drive_pub.publish(drive_to_point)
+points = [(1, 2), (3, 4), (5, 6)]
 
-        # Wait for the robot to reach the point
-        # (e.g., wait for a certain distance threshold to be reached)
-        # This could also be done using feedback from the robot's sensors.
+for point in points:
+    drive_to_point = Point()
+    drive_to_point.x = point[0]
+    drive_to_point.y = point[1]
+    drive_pub.publish(drive_to_point)
 
-        # Once the robot reaches the point, read the CO2 data from the ROS topic
-        # and process it as needed
-        rospy.spin()
+    while not rospy.is_shutdown():
+        co2_label.config(text=str(sensor_node.co2_data))
+        map_label.config(text='({:.2f}, {:.2f}, {:.2f})'.format(map_node.map_data.x, map_node.map_data.y, map_node.map_data.z))
+        root.update()
 
-if __name__ == '__main__':
-    main()
+        # Check if the robot has reached the point
+        # (e.g., using feedback from the robot's sensors)
+        # If the robot has reached the point, break out of the loop
+        # and proceed to the next point.
+
+        pass
+
+rospy.spin()
