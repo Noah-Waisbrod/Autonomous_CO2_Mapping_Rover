@@ -194,7 +194,12 @@ void loop() {
 //-------------------------------Functions------------------------------
 
 //-----------CO2-----------
-//Function to get the CO2 reading
+/**
+ * @brief Function to get the CO2 reading
+ *
+ * 
+ * @return int 
+ */
 int getCO2(){
   if (! sgp.IAQmeasure()) {
     Serial.println("Measurement failed");
@@ -203,7 +208,11 @@ int getCO2(){
   return sgp.eCO2;
   }
 
-//Function to get the TVOC (Total Voletile Oganic Comounds) reading
+/**
+ * @brief  Function to get the TVOC (Total Voletile Oganic Comounds) reading
+ * 
+ */
+
 int getTVOC(){
   if (! sgp.IAQmeasure()) {
     Serial.println("Measurement failed");
@@ -211,9 +220,15 @@ int getTVOC(){
   }
   return sgp.TVOC;
   }
+/**
+ * 
+ * @brief function to check safty distance
+ * -----------SHARP-----------
+ * @param frontDist 
+ * @param sideDist 
+ * @return boolean 
+ */
 
-//-----------SHARP-----------
-//function to check safty distance
 boolean SafteyDistance(double frontDist, double sideDist){
       double FD = map(analogRead(sharpF),0,1023,0,3300);
       double LD = map(analogRead(sharpL),0,1023,0,3300);
@@ -233,11 +248,17 @@ boolean SafteyDistance(double frontDist, double sideDist){
 }
 
 //-----------LED-----------
-//Function to update the LED stick
-// 0 = OFF
-// 1 = GREEN
-// 2 = RED
-// 3 = BLUE
+//
+//
+/**
+ * @brief Function to update the LED stick
+ * 
+ * @param colour 
+ *      0 = OFF;
+ *      1 = GREEN;
+ *      2 = RED;
+ *      3 = BLUE;
+ */
 void setNeoPixelColor(int colour) {
   for(int i = 0; i < 8; i++){
     if(colour == 1){
@@ -255,7 +276,13 @@ void setNeoPixelColor(int colour) {
 
 //-------------------------------PID------------------------------
 //-----------Helper Functions-----------
-// This function applies PWM inputs (u_L and u_R) to the right and left wheels
+
+/**
+ * @brief This function applies PWM inputs (u_L and u_R) to the right and left wheels
+ * 
+ * @param u_L 
+ * @param u_R 
+ */
 void driveVehicle(short u_L, short u_R)
 {
     // LEFT WHEEL
@@ -291,7 +318,14 @@ void driveVehicle(short u_L, short u_R)
     }
 }
 
-// Compute the wheel rate from elapsed time and encoder ticks [rad/s]
+
+/**
+ * @brief Compute the wheel rate from elapsed time and encoder ticks [rad/s]
+ * 
+ * @param encoder_ticks 
+ * @param delta_t 
+ * @return double 
+ */
 double compute_wheel_rate(long encoder_ticks, double delta_t)
 {
     double omega;
@@ -299,7 +333,13 @@ double compute_wheel_rate(long encoder_ticks, double delta_t)
     return omega;
 }
 
-// Compute wheel speed [m/s]
+
+/**
+ * @brief Compute wheel speed [m/s]
+ * 
+ * @param omega_wheel 
+ * @return double 
+ */
 double compute_wheel_speed(double omega_wheel)
 {
     double v_wheel;
@@ -307,7 +347,13 @@ double compute_wheel_speed(double omega_wheel)
     return v_wheel;
 }
 
-// Compute vehicle speed [m/s]
+/**
+ * @brief Compute vehicle speed [m/s]
+ * 
+ * @param  v_L 
+ * @param  v_R 
+ * @return double 
+ */
 double compute_vehicle_speed(double v_L, double v_R)
 {
     double v;
@@ -315,7 +361,14 @@ double compute_vehicle_speed(double v_L, double v_R)
     return v;
 }
 
-// Compute vehicle turning rate [rad/s]
+
+/**
+ * @brief Compute vehicle turning rate [rad/s]
+ * 
+ * @param v_L 
+ * @param v_R 
+ * @return double 
+ */
 double compute_vehicle_rate(double v_L, double v_R)
 {
     double omega;
@@ -323,7 +376,14 @@ double compute_vehicle_rate(double v_L, double v_R)
     return omega;
 }
 
-// Compute v_L from v and omega
+
+/**
+ * @brief Compute v_L from v and omega
+ * 
+ * @param v 
+ * @param omega 
+ * @return double 
+ */
 double compute_L_wheel_speed(double v, double omega)
 {
     double v_wheel = 0.0;
@@ -331,7 +391,14 @@ double compute_L_wheel_speed(double v, double omega)
     return v_wheel;
 }
 
-// Compute v_R from v and omega
+
+/**
+ * @brief Compute v_R from v and omega
+ * 
+ * @param v 
+ * @param omega 
+ * @return double 
+ */
 double compute_R_wheel_speed(double v, double omega)
 {
     double v_wheel = 0.0;
@@ -339,7 +406,16 @@ double compute_R_wheel_speed(double v, double omega)
     return v_wheel;
 }
 
-// Wheel speed PI controller function
+
+/**
+ * @brief Wheel speed PI controller function
+ * 
+ * @param e_now 
+ * @param e_int 
+ * @param k_P 
+ * @param k_I 
+ * @return short 
+ */
 short PI_controller(double e_now, double e_int, double k_P, double k_I)
 {
     short u;
@@ -359,6 +435,12 @@ short PI_controller(double e_now, double e_int, double k_P, double k_I)
 
 
 //-------------control-------------
+/**
+ * @brief PIControler
+ * 
+ * @param vd 
+ * @param od 
+ */
 void PIControler(double vd, double od){
     // Get the elapsed time [ms]
     t_now = millis();
