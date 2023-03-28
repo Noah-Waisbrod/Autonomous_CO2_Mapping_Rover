@@ -1,7 +1,9 @@
 import rospy
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point,Occuapncy_grid,MapMetaData
 from std_msgs.msg import Float32, Int32
 from tkinter import *
+import matplotlib as plt
+import mapping
 
 class CO2SensorNode:
     def __init__(self):
@@ -9,29 +11,67 @@ class CO2SensorNode:
         self.sub = rospy.Subscriber('co2_topic', Float32, self.co2_callback)
 
     def co2_callback(self, msg):
-        self.co2_data = msg.data
+        self.co2_data = msg
 
 class MapNode:
     def __init__(self):
         self.map_data = Point()
-        self.sub = rospy.Subscriber('map_topic', Point, self.map_callback)
+        self.map_metadata = MapMetaData()
+        self.width =0
+        self.height = 0
+        self.sub = rospy.Subscriber('map_topic', Occuapncy_grid, self.map_callback)
 
     def map_callback(self, msg):
-        self.map_data = msg
+        self.map_data = msg.data
+        self.map_metadata= msg.MapMetaData
+        self.width = map_metadata.width
+        self.height = map_metadata.height
+        self.two_d_array = [[0 for x in range(width)] for y in range(height)]
+        index =0
+        for y in range(height):
+            for x in range(width):
+                two_d_array[y][x] = map_data[index]
+                index += 1
+        plt.plot(two_d_array)
+class Current_pos:
+    def __init__(self):
+        self.cp =Point()
+        self.POSE =POSE() #todo fix this shit
+        self.orientation = Orientation()
+        self.cp_x =0
+        self.cp_y =0
+        self.sub = rospy.Subscriber('map_pose', POSE, self.currentPos_callback)
+
+    def currentPos_callback(self,msg):
+        self.pose = msg
+        self.cp = self.POSE.point
+        self.cp_x=self.cp.y
+        self.cp_y =self.cp.y
+
+
+
 
 def stop():
     global root
     drive_pub.publish(Point(x=0, y=0, z=0)) # publish x,x,x to stop robot movement
     root.destroy()
 
+visited_point =[[],[],[]]
+drive_pub = rospy.Publisher('/drive_to_topic', Point, queue_size=10)
+
 rospy.init_node('robot_driver', anonymous=True)
 sensor_node = CO2SensorNode()
 map_node = MapNode()
+current_point = Current_pos()
+visited_point[0].append(current_point.cp_x)
+visited_point[1].append(current_point.cp_x)
+visited_point[2].append(sensor_node.co2_data)
 
 root = Tk()
 label1 = Label(root, text='CO2 Sensor Reading:')
 label1.pack()
 co2_label = Label(root, text='0')
+co2_label.text = sensor_node.co2_data
 co2_label.pack()
 label2 = Label(root, text='Map Data:')
 label2.pack()
@@ -40,9 +80,9 @@ map_label.pack()
 button = Button(root, text='Stop', command=stop)
 button.pack()
 
-drive_pub = rospy.Publisher('/drive_to_topic', Point, queue_size=10)
 
-points = [(1, 2), (3, 4), (5, 6)]
+goal = mapping.close_point(map_node.two_d_array,visited_point)
+points = mapping.astar(current_point.cp,goal,map_node.two_d_array)
 
 for point in points:
     drive_to_point = Point()
