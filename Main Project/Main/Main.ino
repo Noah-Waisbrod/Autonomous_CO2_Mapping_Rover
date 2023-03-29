@@ -7,20 +7,40 @@
 
 //---------------------------------Imports----------------------------------
 #include <ros.h> //this must be first import
-#include <std_msgs/String.h>
+#include <std_msgs/Int32.h> // pass CO2 out as float32
+#include <geometry_msgs/Point.h>
 #include <Adafruit_NeoPixel.h>
 #include <Wire.h>
 #include <Adafruit_SGP30.h>
 
 
+//------------------------------Location setups-----------------------------
+
+int curPos[] = [0,0]; //x,y
+int next[] = [0,0];//dist,angle
+
 
 //------------------------------ros node setups-----------------------------
 ros::NodeHandle nh;
 
-std_msgs::String str_msg;
-ros::Publisher chatter("chatter", &str_msg);
-ros::Publisher chatter("pos", &str_msg);
+std_msgs::Int32 CO2_out;//pass CO2 out as Float32 
+ros::Publisher chatter("co2_topic", &CO2_out);
+/**
+ * @brief Callback for Ros drive_to_topic subscirber
+ * 
+ */
+void positionCB( const geometry_msgs/Point.h & point){
+  int x = int(point.x);   // x
+  int y = int(point.y);   //y
+  int dx = curPos[0]-x;
+  int dy = curPos[1]-y;
+  float dis = sqrt(pow(dx,2)+pow(dy,2));
+  float angle = atan(dy/dx);
+  next =[dis,angle];
 
+}
+
+ros::Subscriber<geometry_msgs/Point.h> sub("drive_to_topic", &positionCB );
 //------------------------------pin assignments-----------------------------
 
 
@@ -186,8 +206,8 @@ void setup() {
 //----------------------------------main--------------------------------
 void loop() {
   
-  PIControler(1,0);
-  chatter.publish(String(getCO2());
+  PIControler(next[0],next[1]);
+  chatter.publish(getCO2());
   nh.spinOnce();
 }
 
@@ -228,7 +248,6 @@ int getTVOC(){
  * @param sideDist 
  * @return boolean 
  */
-
 boolean SafteyDistance(double frontDist, double sideDist){
       double FD = map(analogRead(sharpF),0,1023,0,3300);
       double LD = map(analogRead(sharpL),0,1023,0,3300);
