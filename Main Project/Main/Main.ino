@@ -43,7 +43,7 @@ void positionCB( const geometry_msgs/Point.h & point){
  * @brief kill callback if kill is pushed loop so robot stops
  * 
  */
-
+void killCB(const std_msgs/Int32.h &kill);
 ros::Subscriber<geometry_msgs/Point.h> sub("drive_to_topic", &positionCB );
 
 ros::Subscriber<std_msgs/Int32.h> sub("Kill", &Kill );
