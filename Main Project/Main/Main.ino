@@ -39,8 +39,14 @@ void positionCB( const geometry_msgs/Point.h & point){
   next =[dis,angle];
 
 }
+/**
+ * @brief kill callback if kill is pushed loop so robot stops
+ * 
+ */
 
 ros::Subscriber<geometry_msgs/Point.h> sub("drive_to_topic", &positionCB );
+
+ros::Subscriber<std_msgs/Int32.h> sub("Kill", &Kill );
 //------------------------------pin assignments-----------------------------
 
 
@@ -108,6 +114,18 @@ double e_Lint = 0.0;
 double e_Rint = 0.0;
 
 //-----helper function-------
+void killCB(const std_msgs/Int32.h &kill){
+  if (int(kill) = 1){
+    digitalWrite(I1, LOW);//stop all motors
+    digitalWrite(I2, LOW);
+    digitalWrite(I3, LOW);
+    digitalWrite(I4, LOW);
+  }
+  else{
+    return;
+  }
+
+}
 // This function is called when SIGNAL_AL (left encoder) goes HIGH
 void decodeEncoderTicks_L()
 {

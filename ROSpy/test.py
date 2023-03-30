@@ -53,13 +53,18 @@ class Current_pos:
 
 def stop():
     global root
-    drive_pub.publish(Point(x=0, y=0, z=0)) # publish x,x,x to stop robot movement
+    kill_pub.publish(1)
     root.destroy()
+    while True:
+        rospy.logwarn("Stop pushed, Function frozen")
+
 
 visited_point =[[],[],[]]
 drive_pub = rospy.Publisher('/drive_to_topic', Point, queue_size=10)
+kill_pub = rospy.Publisher('/Kill', Int32, queue_size=10)
 
 rospy.init_node('robot_driver', anonymous=True)
+
 sensor_node = CO2SensorNode()
 map_node = MapNode()
 current_point = Current_pos()
@@ -68,6 +73,8 @@ visited_point[1].append(current_point.cp_x)
 visited_point[2].append(sensor_node.co2_data)
 
 root = Tk()
+canvas = Canvas(root, width=map_node.map_data.info.width, height=map_node.map_data.info.height)
+canvas.pack()
 label1 = Label(root, text='CO2 Sensor Reading:')
 label1.pack()
 co2_label = Label(root, text='0')
@@ -101,5 +108,6 @@ for point in points:
         # and proceed to the next point.
 
         pass
+
 
 rospy.spin()
