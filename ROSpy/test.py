@@ -130,11 +130,6 @@ for point in points:
         canvas.img = img
         root.update()
 
-        # Check if the robot has reached the point
-        # (e.g., using feedback from the robot's sensors)
-        # If the robot has reached the point, break out of the loop
-        # and proceed to the next point.
-
         pass
 
 
