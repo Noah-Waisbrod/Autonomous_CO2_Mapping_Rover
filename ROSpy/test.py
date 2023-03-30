@@ -58,6 +58,27 @@ def stop():
     while True:
         rospy.logwarn("Stop pushed, Function frozen")
 
+def update_heatmap(data,map):
+    global canvas
+    co2Min = 100000
+    co2Max =0
+
+    for i in data[3]:
+        if c02Min>i:
+            co2Min =i
+        if c02Max<i:
+            co2Max =i
+    co2_norm = (co2 - co2Min) / (co2Max - co2Min)
+    heatmap = np.zeros((map.width, map.height, 3))
+    heatmap[:, :, 0] = co2_norm  # set red channel to co2 data
+    heatmap[:, :, 2] = map_data / 100.0  # set blue channel to map data (normalized)
+    img = PhotoImage(data=np.uint8(heatmap * 255))
+    return(img)
+
+
+
+
+    
 
 visited_point =[[],[],[]]
 drive_pub = rospy.Publisher('/drive_to_topic', Point, queue_size=10)
@@ -100,6 +121,9 @@ for point in points:
     while not rospy.is_shutdown():
         co2_label.config(text=str(sensor_node.co2_data))
         map_label.config(text='({:.2f}, {:.2f}, {:.2f})'.format(map_node.map_data.x, map_node.map_data.y, map_node.map_data.z))
+        img = update_heatmap(visited_point,map_node)
+        canvas.create_image(0, 0, anchor=NW, image=img)
+        canvas.img = img
         root.update()
 
         # Check if the robot has reached the point
@@ -111,3 +135,4 @@ for point in points:
 
 
 rospy.spin()
+
