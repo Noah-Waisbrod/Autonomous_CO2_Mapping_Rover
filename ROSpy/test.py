@@ -1,9 +1,10 @@
 import rospy
-from geometry_msgs.msg import Point,Occuapncy_grid,MapMetaData
+from geometry_msgs.msg import Point,Occuapncy_grid,MapMetaData,Pose,Quaternion
 from std_msgs.msg import Float32, Int32
 from tkinter import *
 import matplotlib as plt
 import mapping
+import numpy as np
 
 class CO2SensorNode:
     def __init__(self):
@@ -24,23 +25,23 @@ class MapNode:
     def map_callback(self, msg):
         self.map_data = msg.data
         self.map_metadata= msg.MapMetaData
-        self.width = map_metadata.width
-        self.height = map_metadata.height
-        self.two_d_array = [[0 for x in range(width)] for y in range(height)]
+        self.width = self.map_metadata.width
+        self.height = self.map_metadata.height
+        self.two_d_array = [[0 for x in range(self.width)] for y in range(self.height)]
         index =0
-        for y in range(height):
-            for x in range(width):
-                two_d_array[y][x] = map_data[index]
+        for y in range(self.height):
+            for x in range(self.width):
+                self.two_d_array[y][x] = self.map_data[index]
                 index += 1
-        plt.plot(two_d_array)
+
 class Current_pos:
     def __init__(self):
         self.cp =Point()
-        self.POSE =POSE() #todo fix this shit
-        self.orientation = Orientation()
+        self.POSE =Pose() #todo fix this shit
+        self.orientation = Quaternion()
         self.cp_x =0
         self.cp_y =0
-        self.sub = rospy.Subscriber('map_pose', POSE, self.currentPos_callback)
+        self.sub = rospy.Subscriber('map_pose', Pose, self.currentPos_callback)
 
     def currentPos_callback(self,msg):
         self.pose = msg
@@ -64,14 +65,17 @@ def update_heatmap(data,map):
     co2Max =0
 
     for i in data[3]:
-        if c02Min>i:
+        if co2Min>i:
             co2Min =i
-        if c02Max<i:
+        if co2Max<i:
             co2Max =i
-    co2_norm = (co2 - co2Min) / (co2Max - co2Min)
+    for i in data:    
+        for j in i:    
+            co2_norm = (data[2][i][j] - co2Min) / (co2Max - co2Min)
     heatmap = np.zeros((map.width, map.height, 3))
+    map_data = np.array(map.two_d_array).reshape((map_node.width, map.height))
     heatmap[:, :, 0] = co2_norm  # set red channel to co2 data
-    heatmap[:, :, 2] = map_data / 100.0  # set blue channel to map data (normalized)
+    heatmap[:, :, 2] = map / 100.0  # set blue channel to map data (normalized)
     img = PhotoImage(data=np.uint8(heatmap * 255))
     return(img)
 
