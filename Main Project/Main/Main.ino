@@ -538,3 +538,38 @@ void PIControler(double vd, double od){
 
     }
 }
+
+/**
+ * @brief driveDistance
+ * 
+ * @param distance 
+ */
+//input distance in [m]
+void driveDistance(double distance){
+  int t1 = distance*0.8/0.8;
+  int t2 = distance*0.2/0.4;
+  PIControler(0.8,0);
+  delay(t1*1000);
+  PIControler(0.4,0);
+  delay(t2*1000);
+  PIControler(0,0);
+  delay(1000);
+  }
+
+/**
+ * @brief turnAngle
+ * 
+ * @param ang 
+ */
+//input angle in [deg]
+void turnAngle(double ang){
+  double rad = ang*3.14/180
+  int t1 = rad*0.8/4;
+  int t2 = distance*0.2/2;
+  PIControler(4,0);
+  delay(t1*1000);
+  PIControler(2,0);
+  delay(t2*1000);
+  PIControler(0,0);
+  delay(1000);
+  }
