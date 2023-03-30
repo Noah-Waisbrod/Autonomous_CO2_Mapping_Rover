@@ -36,8 +36,8 @@ class MapNode:
 
 class Current_pos:
     def __init__(self):
-        self.cp =Point()
-        self.POSE =Pose() #todo fix this shit
+        self.cp = Point()
+        self.POSE = Pose() #todo fix this shit
         self.orientation = Quaternion()
         self.cp_x =0
         self.cp_y =0
