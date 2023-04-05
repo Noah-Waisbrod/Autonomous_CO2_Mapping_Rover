@@ -1,0 +1,34 @@
+<launch>
+  <!-- Launch RPLIDAR -->
+  <node pkg="rplidar_ros" type="rplidarNode" name="rplidar_node" output="screen">
+    <param name="serial_port" value="/dev/ttyUSB0"/>
+    <param name="serial_baudrate" value="115200"/>
+  </node>
+  <!-- Launch HectorSLAM -->
+  <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping_node" output="screen">
+    <param name="map_resolution" value="0.05"/> <!-- Set the map resolution to 5 cm/pixel -->
+    <param name="map_size" value="512"/>      <!-- Set the map size to 512x512 pixels -->
+    <!-- Add the following lines to subscribe to the CO2 topic -->
+    <remap from="co2_data" to="/co2"/> 
+    <arg name="co2_topic" default="/co2" />
+    <node pkg="hector_geotiff" type="geotiff_node" name="hector_geotiff" output="screen">
+      <remap from="map" to="map"/>
+      <param name="filename" value="hector_map"/>
+      <param name="directory" value="$(find hector_mapping)/map"/>
+      <param name="co2_topic" value="$(arg co2_topic)"/>
+    </node>
+  </node>
+  <!-- Launch rosserial_python -->
+  <node pkg="rosserial_python" type="serial_node.py" name="rosserial_node" output="screen">
+    <param name="port" value="/dev/ttyACM0"/>
+    <param name="baud" value="9600"/>
+  </node>
+  <!-- Launch robot13_controller nodes -->
+  <node pkg="robot13_controller" type="driver.py" name="driver_node" output="screen"/>
+  <node pkg="robot13_controller" type="Node.py" name="node_node" output="screen"/>
+  <node pkg="robot13_controller" type="backup.py" name="backup_node" output="screen"/>
+  <node pkg="rviz" type="rviz" name="rviz">
+    <param name="config" value="default"/>
+  </node>
+
+</launch>

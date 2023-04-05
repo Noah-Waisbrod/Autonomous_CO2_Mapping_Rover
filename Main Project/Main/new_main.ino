@@ -1,55 +1,8 @@
-
-//-------------------------------------
-//Names          : Noah Waisbrod, Mustafa Hasan, Matthew Murray
-//Student Numbers: 20274009                      20269600
-//Sources        : Thomas Sears (thomas.sears@queensu.ca)(PI-Controller)
-//------------------------------------- 
-
-//---------------------------------Imports----------------------------------
-#include <ros.h> //this must be first import
-#include <std_msgs/Int32.h> // pass CO2 out as Int32
-#include <geometry_msgs/Point.h>
+#include <ros.h>
+#include <geometry_msgs/Twist.h>
 #include <Adafruit_NeoPixel.h>
-#include <Wire.h>
-#include <Adafruit_SGP30.h>
 
-
-//------------------------------Location setups-----------------------------
-
-int curPos[] = [0,0]; //x,y
-int next[] = [0,0];//dist,angle
-
-
-//------------------------------ros node setups-----------------------------
 ros::NodeHandle nh;
-
-std_msgs::Int32 CO2_out;//pass CO2 out as Float32 
-ros::Publisher chatter("co2_topic", &CO2_out);
-/**
- * @brief Callback for Ros drive_to_topic subscirber
- * 
- */
-void positionCB( const geometry_msgs/Point.h & point){
-  int x = int(point.x);   // x
-  int y = int(point.y);   //y
-  int dx = curPos[0]-x;
-  int dy = curPos[1]-y;
-  float dis = sqrt(pow(dx,2)+pow(dy,2));
-  float angle = atan(dy/dx);
-  next =[dis,angle];
-
-}
-/**
- * @brief kill callback if kill is pushed loop so robot stops
- * 
- */
-void killCB(const std_msgs/Int32.h &kill);
-ros::Subscriber<geometry_msgs/Point.h> sub("drive_to_topic", &positionCB );
-
-ros::Subscriber<std_msgs/Int32.h> sub("Kill", &killCB );
-//------------------------------pin assignments-----------------------------
-
-
 
 //----SHARPS----
 int sharpF = A5;
@@ -61,8 +14,7 @@ int PIN = 2;
 int NUMPIXELS = 8;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_RGBW + NEO_KHZ800);
 
-//----CO2----
-Adafruit_SGP30 sgp;
+
 
 //----wheels----
 int EB = 5; // Wheel PWM pin (must be a PWM pin)
@@ -113,79 +65,36 @@ double e_R = 0.0;
 double e_Lint = 0.0;
 double e_Rint = 0.0;
 
-//-----helper function-------
-void killCB(const std_msgs/Int32.h &kill){
-  if (int(kill) = 1){
-    digitalWrite(I1, LOW);//stop all motors
-    digitalWrite(I2, LOW);
-    digitalWrite(I3, LOW);
-    digitalWrite(I4, LOW);
-  }
-  else{
-    return;
-  }
 
-}
-// This function is called when SIGNAL_AL (left encoder) goes HIGH
-void decodeEncoderTicks_L()
-{
-    if (digitalRead(SIGNAL_BL) == LOW)
-    {
-        // SIGNAL_A leads SIGNAL_B, so count one way
-        encoder_ticks_L--;
-    }
-    else
-    {
-        // SIGNAL_B leads SIGNAL_A, so count the other way
-        encoder_ticks_L++;
-    }
+
+void driveCallback(const geometry_msgs::Twist& msg) {
+  // Map the Twist message to motor commands
+  double left_speed = (double)(msg.linear.x - msg.angular.z);
+  double right_speed = (double)(msg.linear.x + msg.angular.z);
+
+  PIControler(left_speed,right_speed);
+  Serial.print("Left motor: ");
+  Serial.println(left_speed);
+  Serial.print("Right motor: ");
+  Serial.println(right_speed);
 }
 
-// This function is called when SIGNAL_AR (right encoder) goes HIGH
-void decodeEncoderTicks_R()
-{
-    if (digitalRead(SIGNAL_BR) == LOW)
-    {
-        // SIGNAL_A leads SIGNAL_B, so count one way
-        encoder_ticks_R++;
-    }
-    else
-    {
-        // SIGNAL_B leads SIGNAL_A, so count the other way
-        encoder_ticks_R--;
-    }
-}
+ros::Subscriber<geometry_msgs::Twist> sub("/cmd_vel", &driveCallback);
 
-//-----------------------------------Setup-------------------------------
 void setup() {
-    //start
-    Serial.begin(9600);     
-    Serial.println(" ");
-    //ros
-    nh.initNode();
-    nh.advertise(chatter);
+  nh.initNode();
+  nh.subscribe(sub);
 
-
-    //SHARP
-    pinMode(sharpF, INPUT);
-    pinMode(sharpL, INPUT);
-    pinMode(sharpR, INPUT);
+  Serial.begin(9600);
+  //SHARP
+  pinMode(sharpF, INPUT);
+  pinMode(sharpL, INPUT);
+  pinMode(sharpR, INPUT);
 
     //LED
-    pixels.begin();
-    pixels.setBrightness(50);
-
-    //CO2 (sensor to warm up)
-    if (! sgp.begin()) {
-      Serial.println("SGP30 not found :(");
-      while (1);
-    }
-    Serial.println("Found SGP30");
-    for (int i = 0; i < 15; i++) {
-      Serial.print(".");
-      delay(1000);
-    }
-
+  pixels.begin();
+  pixels.setBrightness(50);
+  
     //PID
     // Configure digital pins for output
     pinMode(EA, OUTPUT);
@@ -221,43 +130,39 @@ void setup() {
     Serial.println("Program ready.");
 }
 
-//----------------------------------main--------------------------------
 void loop() {
-  
-  PIControler(next[0],next[1]);
-  chatter.publish(std_msgs::Int32 getCO2());
   nh.spinOnce();
 }
 
-//-------------------------------Functions------------------------------
+// This function is called when SIGNAL_AL (left encoder) goes HIGH
+void decodeEncoderTicks_L()
+{
+    if (digitalRead(SIGNAL_BL) == LOW)
+    {
+        // SIGNAL_A leads SIGNAL_B, so count one way
+        encoder_ticks_L--;
+    }
+    else
+    {
+        // SIGNAL_B leads SIGNAL_A, so count the other way
+        encoder_ticks_L++;
+    }
+}
 
-//-----------CO2-----------
-/**
- * @brief Function to get the CO2 reading
- *
- * 
- * @return int 
- */
-int getCO2(){
-  if (! sgp.IAQmeasure()) {
-    Serial.println("Measurement failed");
-    return;
-  }
-  return sgp.eCO2;
-  }
-
-/**
- * @brief  Function to get the TVOC (Total Voletile Oganic Comounds) reading
- * 
- */
-
-int getTVOC(){
-  if (! sgp.IAQmeasure()) {
-    Serial.println("Measurement failed");
-    return 0;
-  }
-  return sgp.TVOC;
-  }
+// This function is called when SIGNAL_AR (right encoder) goes HIGH
+void decodeEncoderTicks_R()
+{
+    if (digitalRead(SIGNAL_BR) == LOW)
+    {
+        // SIGNAL_A leads SIGNAL_B, so count one way
+        encoder_ticks_R++;
+    }
+    else
+    {
+        // SIGNAL_B leads SIGNAL_A, so count the other way
+        encoder_ticks_R--;
+    }
+}
 /**
  * 
  * @brief function to check safty distance
@@ -270,12 +175,14 @@ boolean SafteyDistance(double frontDist, double sideDist){
       double FD = map(analogRead(sharpF),0,1023,0,3300);
       double LD = map(analogRead(sharpL),0,1023,0,3300);
       double RD = map(analogRead(sharpR),0,1023,0,3300);
-    
+    long lt= millis();
     for(int i = 0; i < 10; i++){
-      FD = (FD + map(analogRead(sharpF),0,1023,0,3300))/2;
-      LD = (LD + map(analogRead(sharpL),0,1023,0,3300))/2;
-      RD = (RD + map(analogRead(sharpR),0,1023,0,3300))/2;
-      delay(10);
+           
+        FD = (FD + map(analogRead(sharpF),0,1023,0,3300))/2;
+        LD = (LD + map(analogRead(sharpL),0,1023,0,3300))/2;
+        RD = (RD + map(analogRead(sharpR),0,1023,0,3300))/2;
+        
+      
     }
     if(FD <= frontDist && LD <= sideDist && RD <= sideDist){
        return true; 
@@ -283,7 +190,6 @@ boolean SafteyDistance(double frontDist, double sideDist){
        return false;
     }
 }
-
 //-----------LED-----------
 //
 //
@@ -310,16 +216,6 @@ void setNeoPixelColor(int colour) {
     }
   pixels.show(); // update the NeoPixel stick
 }
-
-//-------------------------------PID------------------------------
-//-----------Helper Functions-----------
-
-/**
- * @brief This function applies PWM inputs (u_L and u_R) to the right and left wheels
- * 
- * @param u_L 
- * @param u_R 
- */
 void driveVehicle(short u_L, short u_R)
 {
     // LEFT WHEEL
@@ -443,34 +339,6 @@ double compute_R_wheel_speed(double v, double omega)
     return v_wheel;
 }
 
-
-/**
- * @brief Wheel speed PI controller function
- * 
- * @param e_now 
- * @param e_int 
- * @param k_P 
- * @param k_I 
- * @return short 
- */
-short PI_controller(double e_now, double e_int, double k_P, double k_I)
-{
-    short u;
-    u = (short)(k_P * e_now + k_I * e_int);
-
-    // Saturation (i.e., maximum input) detection
-    if (u > 255)
-    {
-        u = 255;
-    }
-    else if (u < -255)
-    {
-        u = -255;
-    }
-    return u;
-}
-
-
 //-------------control-------------
 /**
  * @brief PIControler
@@ -538,39 +406,29 @@ void PIControler(double vd, double od){
 
     }
 }
-
 /**
- * @brief driveDistance
+ * @brief Wheel speed PI controller function
  * 
- * @param distance 
+ * @param e_now 
+ * @param e_int 
+ * @param k_P 
+ * @param k_I 
+ * @return short 
  */
-//input distance in [m]
-void driveDistance(double distance){
-  int t1 = distance*0.8/0.8;
-  int t2 = distance*0.2/0.4;
-  PIControler(0.8,0);
-  delay(t1*1000);
-  PIControler(0.4,0);
-  delay(t2*1000);
-  PIControler(0,0);
-  delay(1000);
-  }
+short PI_controller(double e_now, double e_int, double k_P, double k_I)
+{
+    short u;
+    u = (short)(k_P * e_now + k_I * e_int);
 
-/**
- * @brief turnAngle
- * 
- * @param ang 
- */
-//input angle in [deg]
-void turnAngle(double ang){
-  double rad = ang*3.14/180;
-  int t1 = rad*0.8/4;
-  int t2 = distance*0.2/2;
-  PIControler(4,0);
-  delay(t1*1000);
-  PIControler(2,0);
-  delay(t2*1000);
-  PIControler(0,0);
-  delay(1000);
-  return;
-  }
+    // Saturation (i.e., maximum input) detection
+    if (u > 255)
+    {
+        u = 255;
+    }
+    else if (u < -255)
+    {
+        u = -255;
+    }
+    return u;
+}
+
