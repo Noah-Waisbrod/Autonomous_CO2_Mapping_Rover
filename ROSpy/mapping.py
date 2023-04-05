@@ -1,30 +1,4 @@
 import heapq
-
-# def close_point(grid,visited_points):
-#     grid_density = 0.025 #0.025m
-#     visit_density = 0.5 #0.5m
-#     resolution = visit_density/grid_density
-#     points =[[],[]]
-#     for i in grid:
-#         for j in grid[i]:
-#             if grid[i][j] ==1 or grid[i][j] ==-1:
-#                 pass
-#             if i%resolution== 0 and j%resolution == 0:
-                
-#                 points[0].append(i)
-#                 points[1].append(j)
-#     close = [0,0]
-#     small = 30000000 #big number
-#     for i in points:
-#         for j in visited_points:
-#             d = manhattan_distance(i,j)
-#             if d < 0.025:
-#                 points.pop(points.index(i))
-#                 continue
-#             if d<small:
-#                 small = d
-#                 close = i
-#     return close
         
 
 def close_point(grid, visited_points):
@@ -55,57 +29,72 @@ def close_point(grid, visited_points):
 
 
 
-def astar(start, goal, grid):
-    """
-    A* algorithm implementation for 2D array without weightings.
-    
-    Parameters:
-        - start: starting point (tuple of row and column indices)
-        - goal: goal point (tuple of row and column indices)
-        - grid: a 2D array representing the grid, where 0 denotes a passable cell and 1 denotes an impassable cell
-    
-    Returns:
-        - A list of tuples representing the intermediate points along the shortest path from start to goal.
-    """
-    
-    # Initialize the open and closed sets
+import heapq
+import math
+
+class Node:
+    def __init__(self, position, g=0, h=0, parent=None):
+        self.position = position
+        self.g = g
+        self.h = h
+        self.f = g + h
+        self.parent = parent
+
+    def __lt__(self, other):
+        return self.f < other.f
+
+    def __eq__(self, other):
+        return self.position == other.position
+
+def find_path(start, end, grid):
     open_set = []
     closed_set = set()
-    
-    # Initialize the g-score and f-score dictionaries
-    g_score = {start: 0}
-    f_score = {start: manhattan_distance(start, goal)}
-    
-    # Add the start point to the open set
-    heapq.heappush(open_set, (f_score[start], start))
-    
+    start_node = Node(start)
+    end_node = Node(end)
+    heapq.heappush(open_set, start_node)
+
     while open_set:
-        current = heapq.heappop(open_set)[1]
-        
-        if current == goal:
-            # Reconstruct the path and return it
-            path = [current]
-            while current in g_score:
-                current = g_score[current]
-                path.append(current)
-            path.reverse()
-            return path
-        
-        closed_set.add(current)
-        
-        for neighbor in get_neighbors(current, grid):
+        current_node = heapq.heappop(open_set)
+        if current_node == end_node:
+            path = []
+            while current_node:
+                path.append(current_node.position)
+                current_node = current_node.parent
+            return path[::-1]
+
+        closed_set.add(current_node)
+
+        for neighbor in get_neighbors(current_node.position, grid):
             if neighbor in closed_set:
                 continue
-            
-            tentative_g_score = g_score[current] + 1  # 1 is the cost of moving to a neighboring cell
-            
-            if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
-                g_score[neighbor] = tentative_g_score
-                f_score[neighbor] = tentative_g_score + manhattan_distance(neighbor, goal)
-                heapq.heappush(open_set, (f_score[neighbor], neighbor))
-    
-    # If the goal is not reachable, return an empty list
-    return []
+
+            g = current_node.g + 1
+            h = math.sqrt((neighbor.x - end.x)**2 + (neighbor.y - end.y)**2)
+            neighbor_node = Node(neighbor, g, h, current_node)
+
+            if neighbor_node in open_set:
+                existing_node = open_set[open_set.index(neighbor_node)]
+                if existing_node.g > neighbor_node.g:
+                    existing_node.g = neighbor_node.g
+                    existing_node.f = existing_node.g + existing_node.h
+                    existing_node.parent = neighbor_node.parent
+            else:
+                heapq.heappush(open_set, neighbor_node)
+
+    return None
+
+def get_neighbors(position, grid):
+    neighbors = []
+    x, y = position.x, position.y
+    if x > 0 and grid[x-1][y] != 1:
+        neighbors.append(Point(x-1, y))
+    if x < len(grid)-1 and grid[x+1][y] != 1:
+        neighbors.append(Point(x+1, y))
+    if y > 0 and grid[x][y-1] != 1:
+        neighbors.append(Point(x, y-1))
+    if y < len(grid[0])-1 and grid[x][y+1] != 1:
+        neighbors.append(Point(x, y+1))
+    return neighbors
 
 def manhattan_distance(point1, point2):
     """
@@ -115,15 +104,4 @@ def manhattan_distance(point1, point2):
     x2, y2 = point2
     return abs(x1 - x2) + abs(y1 - y2)
 
-def get_neighbors(point, grid):
-    """
-    Returns the passable neighboring points of the given point in the grid.
-    """
-    row, col = point
-    height, width = len(grid), len(grid[0])
-    neighbors = []
-    for d_row, d_col in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-        neighbor_row, neighbor_col = row + d_row, col + d_col
-        if 0 <= neighbor_row < height and 0 <= neighbor_col < width and grid[neighbor_row][neighbor_col] == 0:
-            neighbors.append((neighbor_row, neighbor_col))
-    return neighbors
+

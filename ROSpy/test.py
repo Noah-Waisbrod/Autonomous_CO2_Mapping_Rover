@@ -1,3 +1,4 @@
+
 import rospy
 from geometry_msgs.msg import Point,Occuapncy_grid,MapMetaData,Pose,Quaternion
 from std_msgs.msg import Float32, Int32
@@ -6,13 +7,13 @@ import matplotlib as plt
 import mapping
 import numpy as np
 
-class CO2SensorNode:
-    def __init__(self):
-        self.co2_data = 0
-        self.sub = rospy.Subscriber('co2_topic', Float32, self.co2_callback)
+# class CO2SensorNode:
+#     def __init__(self):
+#         self.co2_data = 0
+#         self.sub = rospy.Subscriber('co2_topic', Float32, self.co2_callback)
 
-    def co2_callback(self, msg):
-        self.co2_data = msg
+#     def co2_callback(self, msg):
+#         self.co2_data = msg
 
 class MapNode:
     def __init__(self):
@@ -37,7 +38,7 @@ class MapNode:
 class Current_pos:
     def __init__(self):
         self.cp = Point()
-        self.POSE = Pose() #todo fix this shit
+        self.POSE = Pose() 
         self.orientation = Quaternion()
         self.cp_x =0
         self.cp_y =0
